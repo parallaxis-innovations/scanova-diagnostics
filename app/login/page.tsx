@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { signIn, useSession, signOut } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   Eye,
   EyeOff,
@@ -13,16 +14,20 @@ import {
   Calendar,
   FileText,
   Settings,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
 
 export default function LoginPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
@@ -34,57 +39,49 @@ export default function LoginPage() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
   };
 
+  // Redirect if already authenticated
+  if (status === "authenticated") {
+    router.push("/");
+    return null;
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-scanova-primary" />
+      </div>
+    );
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email: loginData.email,
-      password: loginData.password,
-    });
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: loginData.email,
+        password: loginData.password,
+      });
 
-    if (result?.error) {
-      setError("Invalid login credentials");
+      if (result?.error) {
+        setError("Invalid email or password. Please try again.");
+      } else if (result?.ok) {
+        router.push("/");
+      }
+    } catch (error) {
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleInputChange = (field: string, value: string) => {
     setLoginData((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (error) setError("");
   };
-
-  if (status === "authenticated" && session?.user) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <motion.div
-            variants={fadeUpVariant}
-            initial="hidden"
-            animate="visible"
-            className="mb-8"
-          >
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-3xl font-bold text-scanova-text-header">
-                  Welcome back, {session.user.name || "User"}!
-                </h1>
-                <p className="text-scanova-text-body mt-2">
-                  Manage your health records and appointments
-                </p>
-              </div>
-              <Button
-                onClick={() => signOut({ callbackUrl: "/login" })}
-                variant="outline"
-                className="border-scanova-primary text-scanova-primary"
-              >
-                Logout
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center px-6 py-12">
@@ -119,9 +116,16 @@ export default function LoginPage() {
               <p className="text-gray-500 text-sm">
                 Enter your credentials to continue
               </p>
-              {error && <p className="text-red-500 text-sm">{error}</p>}
             </CardHeader>
             <CardContent>
+              {error && (
+                <Alert className="mb-6 border-red-200 bg-red-50">
+                  <AlertDescription className="text-red-800">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <form onSubmit={handleLogin} className="space-y-5">
                 <div>
                   <Label htmlFor="email">Email</Label>
@@ -130,6 +134,7 @@ export default function LoginPage() {
                       id="email"
                       type="email"
                       required
+                      disabled={isLoading}
                       value={loginData.email}
                       onChange={(e) => handleInputChange("email", e.target.value)}
                       className="pl-10 h-12"
@@ -146,6 +151,7 @@ export default function LoginPage() {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       required
+                      disabled={isLoading}
                       value={loginData.password}
                       onChange={(e) => handleInputChange("password", e.target.value)}
                       className="pl-10 pr-10 h-12"
@@ -154,6 +160,7 @@ export default function LoginPage() {
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <button
                       type="button"
+                      disabled={isLoading}
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2"
                     >
@@ -170,6 +177,7 @@ export default function LoginPage() {
                   <label className="flex items-center gap-2 text-gray-600">
                     <input
                       type="checkbox"
+                      disabled={isLoading}
                       className="rounded border-gray-300 text-scanova-primary"
                     />
                     Remember me
@@ -181,15 +189,23 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-scanova-dark-blue to-scanova-primary hover:opacity-90 text-white h-12 text-lg font-medium rounded-lg"
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-scanova-dark-blue to-scanova-primary hover:opacity-90 text-white h-12 text-lg font-medium rounded-lg disabled:opacity-50"
                 >
-                  Sign In
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Signing in...
+                    </div>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </form>
 
               <p className="mt-6 text-sm text-center text-gray-600">
-                Don’t have an account?{" "}
-                <Link href="/signup" className="text-scanova-primary font-medium">
+                Don't have an account?{" "}
+                <Link href="/signup" className="text-scanova-primary font-medium hover:underline">
                   Sign Up
                 </Link>
               </p>

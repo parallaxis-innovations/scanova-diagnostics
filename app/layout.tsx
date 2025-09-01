@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { Providers } from '@/components/providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -29,11 +30,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className={`${inter.className} antialiased`}>
-        <Navbar />
-        <main className="pt-24">
-          {children}
-        </main>
-        <Footer />
+        <Providers>
+          <Navbar />
+          <main className="pt-24">
+            {children}
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

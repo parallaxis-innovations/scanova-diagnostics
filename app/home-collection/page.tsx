@@ -54,9 +54,7 @@ export default function HomeCollectionPage() {
       return;
     }
 
-    try {
-      console.log("Submitting form data:", formData);
-      
+    try {      
       const res = await fetch("/api/book-collection", {
         method: "POST",
         headers: { 
@@ -65,19 +63,14 @@ export default function HomeCollectionPage() {
         body: JSON.stringify(formData),
       });
 
-      console.log("Response status:", res.status);
-      console.log("Response headers:", Object.fromEntries(res.headers));
-
       // Try to parse response as JSON
       let responseData;
       const contentType = res.headers.get("content-type");
       
       if (contentType && contentType.includes("application/json")) {
         responseData = await res.json();
-        console.log("Response data:", responseData);
       } else {
         const textResponse = await res.text();
-        console.log("Non-JSON response:", textResponse);
         throw new Error(`Server returned non-JSON response: ${textResponse}`);
       }
 

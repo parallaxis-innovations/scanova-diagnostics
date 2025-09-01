@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Poppins } from "next/font/google";
+import { Providers } from '@/components/providers';
 
 const inter = Inter({ subsets: ['latin'] });
 

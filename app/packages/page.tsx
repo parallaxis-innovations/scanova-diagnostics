@@ -140,7 +140,7 @@ export default function PackagesPage() {
 	];
 
 	return (
-		<div className="min-h-screen bg-gray-50">
+		<div className="min-h-screen bg-gray-50 mt-12">
 			{/* Hero Section */}
 			<section className="bg-scanova-gradient text-white py-20">
 				<div className="max-w-7xl mx-auto px-4">

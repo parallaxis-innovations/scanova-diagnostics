@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-
+import { Poppins } from "next/font/google";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, Phone, Mail } from "lucide-react";
@@ -39,7 +39,7 @@ export default function Navbar() {
 			}`}
 		>
 			{/* Top bar */}
-			<div className="bg-scanova-primary text-white py-2 px-4">
+			<div className="bg-scanova-primary text-white py-2 px-4 ">
 				<div className="max-w-7xl mx-auto flex justify-between items-center text-sm">
 					<div className="flex items-center gap-6">
 						<div className="flex items-center gap-2">
@@ -70,11 +70,11 @@ export default function Navbar() {
 				<div className="max-w-7xl mx-auto flex justify-between items-center">
 					{/* Logo */}
 					<Link href="/" className="flex items-center">
-						<div className="flex items-center space-x-2 h-16 lg:h-20 md:h-20 overflow-hidden">
+						<div className="flex items-center space-x-2 h-16 lg:h-28 md:h-20 overflow-hidden">
 							<Image
-								src="/logo1.svg"
+								src="/logo (1).png"
 								alt="Scanova Diagnostics Logo"
-								height={100} // Keep these for the image's natural size
+								height={200} // Keep these for the image's natural size
 								width={200}
 								className="object-contain h-full"
 							/>
@@ -82,7 +82,7 @@ export default function Navbar() {
 					</Link>
 
 					{/* Desktop Navigation */}
-					<div className="hidden lg:flex items-center gap-8">
+					<div className="hidden lg:flex items-center gap-8 text-base">
 						{navItems.map((item) => (
 							<Link
 								key={item.href}
@@ -93,7 +93,7 @@ export default function Navbar() {
 							</Link>
 						))}
 						<Link href="/home-collection">
-							<Button className="bg-scanova-gradient hover:opacity-90 text-white">
+							<Button className="bg-scanova-gradient hover:opacity-90 text-white text-base">
 								Book Now
 							</Button>
 						</Link>

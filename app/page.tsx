@@ -105,7 +105,7 @@ export default function HomePage() {
 	return (
 		<div className="min-h-screen">
 			{/* Hero Section */}
-			<section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-scanova-primary/10 to-scanova-teal/10 overflow-hidden">
+			<section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-scanova-primary/10 to-scanova-teal/10 overflow-hidden mt-12">
 				{/* Background Pattern */}
 				<div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1666214277657-e60f05c40b04?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZG9jdG9yc3xlbnwwfHwwfHx8MA%3D%3D')] bg-cover bg-center">
 					<div className="absolute inset-0 bg-hero-pattern"></div>
@@ -410,7 +410,7 @@ export default function HomePage() {
 						initial="hidden"
 						whileInView="visible"
 						viewport={{ once: true }}
-						className="text-center mb-16"
+						className="text-center mb-12"
 					>
 						<h2 className="text-3xl md:text-4xl font-bold text-scanova-text-header mb-4">
 							What Our Patients Say

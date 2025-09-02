@@ -24,11 +24,11 @@ export const metadata: Metadata = {
 };
 
 const poppins = Poppins({
-      weight: ["400", "500", "600", "700"], // Specify the weights you need
-      subsets: ['latin'],
-      variable: '--font-poppins', // Define a CSS variable name
-      display: 'swap', // Recommended for better performance
-    });
+  weight: ["400", "500", "600", "700"],
+  subsets: ['latin'],
+  variable: '--font-poppins',
+  display: 'swap',
+});
 
 export default function RootLayout({
   children,
@@ -38,11 +38,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className={`${poppins.variable} font-sans`}>
-        <Navbar />
-        <main className="pt-24">
-          {children}
-        </main>
-        <Footer />
+        <Providers>
+          <Navbar />
+          <main className="pt-24">
+            {children}
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

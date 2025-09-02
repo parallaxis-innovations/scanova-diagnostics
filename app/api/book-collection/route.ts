@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
     });
 
     try {
-      await transporter.verify();
+      const verification = await transporter.verify();
+      console.log("verification", verification);
     } catch (verifyError) {
       console.error('SMTP verification failed:', verifyError);
     }
@@ -178,9 +179,10 @@ export async function POST(request: NextRequest) {
 
     // Send emails
     if (formData.email) {
-      await transporter.sendMail(patientMailOptions);
+      const mail = await transporter.sendMail(patientMailOptions);
+      console.log('Email sent to patient:', mail);
     }
-    await transporter.sendMail(adminMailOptions);
+    const mail = await transporter.sendMail(adminMailOptions);
 
     return NextResponse.json({ message: 'Booking successful' }, { status: 200 });
   } catch (error) {

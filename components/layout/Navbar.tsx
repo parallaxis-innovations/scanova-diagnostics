@@ -6,18 +6,21 @@ import Link from "next/link";
 import { Menu, X, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { signOut, useSession } from "next-auth/react";
 
 export default function Navbar() {
 	const [isOpen, setIsOpen] = useState(false);
 	const [isScrolled, setIsScrolled] = useState(false);
+	const { status } = useSession();
+	const isAuthenticated = status === "authenticated";
 
 	useEffect(() => {
-		const handleScroll = () => {
-			setIsScrolled(window.scrollY > 50);
-		};
+			const handleScroll = () => {
+				setIsScrolled(window.scrollY > 50);
+			};
 
-		window.addEventListener("scroll", handleScroll);
-		return () => window.removeEventListener("scroll", handleScroll);
+			window.addEventListener("scroll", handleScroll);
+			return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
 
 	const navItems = [
@@ -26,7 +29,6 @@ export default function Navbar() {
 		{ href: "/packages", label: "Packages" },
 		{ href: "/home-collection", label: "Home Collection" },
 		{ href: "/faq", label: "FAQ" },
-		{ href: "/login", label: "Login" },
 	];
 
 	return (
@@ -92,6 +94,19 @@ export default function Navbar() {
 								{item.label}
 							</Link>
 						))}
+						{isAuthenticated ? (
+							<Button
+								variant="outline"
+								onClick={() => signOut({ callbackUrl: "/login" })}
+								className="text-base"
+							>
+								Logout
+							</Button>
+						) : (
+							<Link href="/login" className="text-scanova-text-body hover:text-scanova-primary transition-colors font-medium">
+								Login
+							</Link>
+						)}
 						<Link href="/home-collection">
 							<Button className="bg-scanova-gradient hover:opacity-90 text-white text-base">
 								Book Now
@@ -124,6 +139,21 @@ export default function Navbar() {
 									{item.label}
 								</Link>
 							))}
+							{isAuthenticated ? (
+								<Button
+									variant="outline"
+									onClick={() => {
+										setIsOpen(false);
+										signOut({ callbackUrl: "/login" });
+									}}
+								>
+									Logout
+								</Button>
+							) : (
+								<Link href="/login" onClick={() => setIsOpen(false)} className="text-scanova-text-body hover:text-scanova-primary transition-colors font-medium">
+									Login
+								</Link>
+							)}
 							<Link href="/home-collection">
 								<Button className="bg-scanova-gradient hover:opacity-90 text-white">
 									Book Now

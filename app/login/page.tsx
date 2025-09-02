@@ -182,7 +182,7 @@ export default function LoginPage() {
                     />
                     Remember me
                   </label>
-                  <Link href="#" className="text-scanova-primary hover:underline">
+                  <Link href="/forgot-password" className="text-scanova-primary hover:underline">
                     Forgot Password?
                   </Link>
                 </div>
@@ -204,7 +204,7 @@ export default function LoginPage() {
               </form>
 
               <p className="mt-6 text-sm text-center text-gray-600">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Link href="/signup" className="text-scanova-primary font-medium hover:underline">
                   Sign Up
                 </Link>

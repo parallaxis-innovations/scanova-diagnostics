@@ -15,12 +15,12 @@ export default function Navbar() {
 	const isAuthenticated = status === "authenticated";
 
 	useEffect(() => {
-			const handleScroll = () => {
-				setIsScrolled(window.scrollY > 50);
-			};
+		const handleScroll = () => {
+			setIsScrolled(window.scrollY > 50);
+		};
 
-			window.addEventListener("scroll", handleScroll);
-			return () => window.removeEventListener("scroll", handleScroll);
+		window.addEventListener("scroll", handleScroll);
+		return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
 
 	const navItems = [
@@ -84,6 +84,7 @@ export default function Navbar() {
 					</Link>
 
 					{/* Desktop Navigation */}
+					{/* Desktop Navigation */}
 					<div className="hidden lg:flex items-center gap-8 text-base">
 						{navItems.map((item) => (
 							<Link
@@ -94,19 +95,42 @@ export default function Navbar() {
 								{item.label}
 							</Link>
 						))}
+
 						{isAuthenticated ? (
-							<Button
-								variant="outline"
-								onClick={() => signOut({ callbackUrl: "/login" })}
-								className="text-base"
-							>
-								Logout
-							</Button>
+							<div className="flex items-center gap-4">
+								{/* Profile Page Link */}
+								<Link
+									href="/profile"
+									className="flex items-center gap-2 text-scanova-text-body hover:text-scanova-primary font-medium"
+								>
+									<Image
+										src="/default-avatar.png" // replace with session.user.image if you have it
+										alt="Profile"
+										width={32}
+										height={32}
+										className="rounded-full border"
+									/>
+									<span>Profile</span>
+								</Link>
+
+								{/* Logout Button */}
+								<Button
+									variant="outline"
+									onClick={() => signOut({ callbackUrl: "/login" })}
+									className="text-base"
+								>
+									Logout
+								</Button>
+							</div>
 						) : (
-							<Link href="/login" className="text-scanova-text-body hover:text-scanova-primary transition-colors font-medium">
+							<Link
+								href="/login"
+								className="text-scanova-text-body hover:text-scanova-primary transition-colors font-medium"
+							>
 								Login
 							</Link>
 						)}
+
 						<Link href="/home-collection">
 							<Button className="bg-scanova-gradient hover:opacity-90 text-white text-base">
 								Book Now
@@ -150,7 +174,11 @@ export default function Navbar() {
 									Logout
 								</Button>
 							) : (
-								<Link href="/login" onClick={() => setIsOpen(false)} className="text-scanova-text-body hover:text-scanova-primary transition-colors font-medium">
+								<Link
+									href="/login"
+									onClick={() => setIsOpen(false)}
+									className="text-scanova-text-body hover:text-scanova-primary transition-colors font-medium"
+								>
 									Login
 								</Link>
 							)}

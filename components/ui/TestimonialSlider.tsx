@@ -54,7 +54,7 @@ export default function TestimonialSlider() {
           className="absolute inset-0 flex items-center justify-center"
         >
           <div className="max-w-4xl mx-auto px-6 text-center">
-            <Quote className="w-12 h-12 text-scanova-teal mx-auto mb-4" />
+            <Quote className="w-10 h-10 text-scanova-teal mx-auto mb-4" />
             <blockquote className="text-lg md:text-xl text-scanova-text-body mb-6 italic">
               "{testimonials[currentIndex].text}"
             </blockquote>
@@ -77,7 +77,7 @@ export default function TestimonialSlider() {
 
             <div className="flex justify-center gap-1 mt-4">
               {Array.from({ length: testimonials[currentIndex].rating }).map((_, i) => (
-                <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                <Star key={i} className="w-5 h-5 text-yellow-400 fill-current mb-3" />
               ))}
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function TestimonialSlider() {
       </AnimatePresence>
 
       {/* Dots indicator */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+      <div className="absolute -bottom-0 left-1/2 transform -translate-x-1/2 flex gap-2">
         {testimonials.map((_, index) => (
           <button
             key={index}

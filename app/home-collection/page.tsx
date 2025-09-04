@@ -54,9 +54,7 @@ export default function HomeCollectionPage() {
       return;
     }
 
-    try {
-      console.log("Submitting form data:", formData);
-      
+    try {      
       const res = await fetch("/api/book-collection", {
         method: "POST",
         headers: { 
@@ -65,19 +63,14 @@ export default function HomeCollectionPage() {
         body: JSON.stringify(formData),
       });
 
-      console.log("Response status:", res.status);
-      console.log("Response headers:", Object.fromEntries(res.headers));
-
       // Try to parse response as JSON
       let responseData;
       const contentType = res.headers.get("content-type");
       
       if (contentType && contentType.includes("application/json")) {
         responseData = await res.json();
-        console.log("Response data:", responseData);
       } else {
         const textResponse = await res.text();
-        console.log("Non-JSON response:", textResponse);
         throw new Error(`Server returned non-JSON response: ${textResponse}`);
       }
 
@@ -166,7 +159,7 @@ export default function HomeCollectionPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 mt-12">
       {/* Hero Section */}
       <section className="bg-scanova-gradient text-white py-20">
         <div className="max-w-7xl mx-auto px-4">
@@ -542,11 +535,11 @@ export default function HomeCollectionPage() {
           <div className="flex justify-center items-center gap-8 flex-wrap">
             <div className="flex items-center gap-2">
               <Phone className="w-5 h-5 text-scanova-primary" />
-              <span className="text-scanova-text-body">+91 12345 67890</span>
+              <span className="text-scanova-text-body">+91 90072 04996</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-scanova-primary" />
-              <span className="text-scanova-text-body">Available across major cities</span>
+              <span className="text-scanova-text-body">Howrah, West bengal, 711101</span>
             </div>
           </div>
         </div>

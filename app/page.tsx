@@ -105,7 +105,7 @@ export default function HomePage() {
 	return (
 		<div className="min-h-screen">
 			{/* Hero Section */}
-			<section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-scanova-primary/10 to-scanova-teal/10 overflow-hidden mt-12">
+			<section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-scanova-primary/10 to-scanova-teal/10 overflow-hidden lg:mt-12 md:mt-12 mt-6">
 				{/* Background Pattern */}
 				<div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1666214277657-e60f05c40b04?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZG9jdG9yc3xlbnwwfHwwfHx8MA%3D%3D')] bg-cover bg-center">
 					<div className="absolute inset-0 bg-hero-pattern"></div>

@@ -23,19 +23,14 @@ import {
   HeartPulse
 } from "lucide-react";
 import Image from "next/image";
-import { directusApi } from "../lib/directus";
 
 export default function SignupPage() {
 	const router = useRouter();
 	const [formData, setFormData] = useState({
-		full_name: "",
-		email_id: "",
-		phone_number: "",
+		name: "",
+		email: "",
+		phone: "",
 		password: "",
-		address: "",
-		age: "",
-		gender: "",
-		blood_group: "",
 		agree: false,
 	});
 	const [error, setError] = useState("");
@@ -60,22 +55,19 @@ export default function SignupPage() {
 		}
 
 		try {
-			// const res = await fetch("/api/signup", {
-			//   method: "POST",
-			//   headers: { "Content-Type": "application/json" },
-			//   body: JSON.stringify({
-			//     name: formData.name,
-			//     email: formData.email,
-			//     phone: formData.phone,
-			//     password: formData.password,
-			//   }),
-			// });
+			const res = await fetch("/api/signup", {
+			  method: "POST",
+			  headers: { "Content-Type": "application/json" },
+			  body: JSON.stringify({
+			    name: formData.name,
+			    email: formData.email,
+			    phone: formData.phone,
+			    password: formData.password,
+			  }),
+			});
+			const data = await res.json();
 
-			const result = await directusApi.registerUser(formData);
-
-			// const data = await res.json();
-
-			if (!result) {
+			if (!res.ok) {
 				throw new Error("Something went wrong");
 			}
 
@@ -136,9 +128,9 @@ export default function SignupPage() {
 									<Label htmlFor="name">Full Name</Label>
 									<div className="relative mt-1">
 										<Input
-											id="full_name"
+											id="name"
 											type="text"
-											value={formData.full_name}
+											value={formData.name}
 											onChange={handleChange}
 											placeholder="Enter your full name"
 											className="pl-10 h-12"
@@ -152,9 +144,9 @@ export default function SignupPage() {
 									<Label htmlFor="email">Email Address</Label>
 									<div className="relative mt-1">
 										<Input
-											id="email_id"
+											id="email"
 											type="email"
-											value={formData.email_id}
+											value={formData.email}
 											onChange={handleChange}
 											placeholder="Enter your email"
 											className="pl-10 h-12"
@@ -168,9 +160,9 @@ export default function SignupPage() {
 									<Label htmlFor="phone">Phone Number</Label>
 									<div className="relative mt-1">
 										<Input
-											id="phone_number"
+											id="phone"
 											type="tel"
-											value={formData.phone_number}
+											value={formData.phone}
 											onChange={handleChange}
 											placeholder="Enter your phone number"
 											className="pl-10 h-12"
@@ -194,89 +186,6 @@ export default function SignupPage() {
 										<Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 									</div>
 								</div>
-
-								<div>
-									<Label htmlFor="address">Address</Label>
-									<div className="relative mt-1">
-										<Input
-											id="address"
-											type="text"
-											value={formData.address}
-											onChange={handleChange}
-											placeholder="Enter your address"
-											className="pl-10 h-12"
-											required
-										/>
-                    <MapPinHouse className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"/>
-									</div>
-								</div>
-
-								<div>
-									<Label htmlFor="age">Age</Label>
-									<div className="relative mt-1">
-										<Input
-											id="age"
-											type="number"
-											value={formData.age}
-											onChange={handleChange}
-											placeholder="Enter your age"
-											className="pl-10 h-12"
-											required
-										/>
-                    <UserPen className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-									</div>
-								</div>
-
-								<div>
-									<Label htmlFor="gender">Gender</Label>
-									<div className="relative mt-1">
-										<select
-											id="gender"
-											value={formData.gender}
-											onChange={(e) =>
-												setFormData({ ...formData, gender: e.target.value })
-											}
-											className="pl-9 pr-3 h-12 w-full border rounded-lg"
-											required
-										>
-											<option value="">Select Gender</option>
-											<option value="Male">Male</option>
-											<option value="Female">Female</option>
-											<option value="Other">Other</option>
-										</select>
-                    <UserCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"/>
-									</div>
-								</div>
-
-								<div>
-									<Label htmlFor="blood_group">Blood Group</Label>
-									<div className="relative mt-1">
-										<select
-											id="blood_group"
-											value={formData.blood_group}
-											onChange={(e) =>
-												setFormData({
-													...formData,
-													blood_group: e.target.value,
-												})
-											}
-											className="pl-9 pr-3 h-12 w-full border rounded-lg"
-											required
-										>
-											<option value="">Select Blood Group</option>
-											<option value="A+">A+</option>
-											<option value="A-">A-</option>
-											<option value="B+">B+</option>
-											<option value="B-">B-</option>
-											<option value="O+">O+</option>
-											<option value="O-">O-</option>
-											<option value="AB+">AB+</option>
-											<option value="AB-">AB-</option>
-										</select>
-                    <HeartPulse className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"/>
-									</div>
-								</div>
-
 								<div className="flex items-center space-x-2">
 									<Checkbox
 										id="agree"

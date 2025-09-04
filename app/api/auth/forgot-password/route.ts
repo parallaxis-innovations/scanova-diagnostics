@@ -68,14 +68,13 @@ export async function POST(request: NextRequest) {
     });
 
     try {
-      const verification = await transporter.verify();
-      console.log("verification", verification);
+      await transporter.verify();
     } catch (verifyError) {
       console.warn("SMTP verification failed, attempting to send anyway:", verifyError);
     }
 
     try {
-      const mail = await transporter.sendMail({
+      await transporter.sendMail({
         from: smtpUser || "noreply@scanovadiagnostics.com",
         to: email,
         subject: "Reset your password",

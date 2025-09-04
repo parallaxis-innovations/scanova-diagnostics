@@ -24,8 +24,7 @@ export async function POST(request: NextRequest) {
     });
 
     try {
-      const verification = await transporter.verify();
-      console.log("verification", verification);
+      await transporter.verify();
     } catch (verifyError) {
       console.error('SMTP verification failed:', verifyError);
     }
@@ -179,14 +178,12 @@ export async function POST(request: NextRequest) {
 
     // Send emails
     if (formData.email) {
-      const mail = await transporter.sendMail(patientMailOptions);
-      console.log('Email sent to patient:', mail);
+      await transporter.sendMail(patientMailOptions);
     }
-    const mail = await transporter.sendMail(adminMailOptions);
 
-    return NextResponse.json({ message: 'Booking successful' }, { status: 200 });
+    return NextResponse.json({ success: true, message: 'Booking successful' }, { status: 200 });
   } catch (error) {
     console.error('Error sending email:', error);
-    return NextResponse.json({ message: 'Error processing booking' }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Error processing booking' }, { status: 500 });
   }
 }

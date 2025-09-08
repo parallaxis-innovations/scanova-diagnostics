@@ -23,7 +23,6 @@ import {
 	HeartPulse
 } from "lucide-react";
 import Image from "next/image";
-import { directusApi } from "../../lib/directus";
 
 export default function SignupPage() {
 	const router = useRouter();
@@ -60,28 +59,25 @@ export default function SignupPage() {
 		}
 
 		try {
-			// const res = await fetch("/api/signup", {
-			//   method: "POST",
-			//   headers: { "Content-Type": "application/json" },
-			//   body: JSON.stringify({
-			//     name: formData.name,
-			//     email: formData.email,
-			//     phone: formData.phone,
-			//     password: formData.password,
-			//   }),
-			// });
-
-			const result = await directusApi.registerUser({
-				email: formData.email_id,
-				password: formData.password,
-				first_name: formData.full_name,
+			const res = await fetch("/api/signup", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					full_name: formData.full_name,
+					email_id: formData.email_id,
+					phone_number: formData.phone_number,
+					password: formData.password,
+					address: formData.address,
+					age: formData.age,
+					gender: formData.gender,
+					blood_group: formData.blood_group,
+				}),
 			});
 
-			// const data = await res.json();
-			console.log(result);
+			const data = await res.json();
 
-			if (!result) {
-				throw new Error("Something went wrong");
+			if (!res.ok) {
+				throw new Error(data.message || "Something went wrong");
 			}
 
 			setSuccess("Account created successfully! Redirecting to login...");

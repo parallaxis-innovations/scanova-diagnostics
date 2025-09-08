@@ -1,9 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { directusService } from '@/lib/directus-service';
+import { getSession } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSession();
     const formData = await request.json();
+    
+    // Create appointment record in Directus with comprehensive fields
+    let appointmentRecord = null;
+    if (session?.user) {
+      try {
+        const appointmentData = {
+          // Basic Information
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          date: formData.date,
+          time: formData.time,
+          tests: formData.tests,
+          notes: formData.notes || null,
+          user_id: (session.user as any).id,
+          status: 'pending',
+          
+          // Additional fields from form (if provided)
+          collection_fee: formData.collection_fee || null,
+          total_amount: formData.total_amount || null,
+          technicial_notes: null, // To be filled by technician later
+          
+          // Timestamp fields (will be set by Directus automatically for created/updated)
+          confirmed_date: null, // To be set when appointment is confirmed
+          completed_date: null, // To be set when appointment is completed
+        };
+
+        appointmentRecord = await directusService.createItem('appointments', appointmentData, (session as any).accessToken);
+      } catch (error) {
+        console.error('Error saving appointment to Directus:', error);
+        // Continue with email sending even if Directus save fails
+      }
+    }
     
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -25,7 +63,6 @@ export async function POST(request: NextRequest) {
 
     try {
       const verification = await transporter.verify();
-      console.log("verification", verification);
     } catch (verifyError) {
       console.error('SMTP verification failed:', verifyError);
     }
@@ -178,15 +215,18 @@ export async function POST(request: NextRequest) {
     };
 
     // Send emails
-    if (formData.email) {
-      const mail = await transporter.sendMail(patientMailOptions);
-      console.log('Email sent to patient:', mail);
-    }
-    const mail = await transporter.sendMail(adminMailOptions);
+    // if (formData.email) {
+    //   const mail = await transporter.sendMail(patientMailOptions);
+    //   console.log('Email sent to patient:', mail);
+    // }
 
-    return NextResponse.json({ message: 'Booking successful' }, { status: 200 });
+    return NextResponse.json({ 
+      success: true,
+      message: 'Booking successful',
+      appointmentId: appointmentRecord?.data?.id || null
+    }, { status: 200 });
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('Error processing booking:', error);
     return NextResponse.json({ message: 'Error processing booking' }, { status: 500 });
   }
 }

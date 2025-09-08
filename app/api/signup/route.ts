@@ -1,13 +1,20 @@
+import { directusApi } from '@/lib/directus';
+import { directusService } from '@/lib/directus-service';
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
+const DIRECTUS_API_URL = process.env.DIRECTUS_API_URL;
+const DIRECTUS_ADMIN_TOKEN = process.env.DIRECTUS_STATIC_ADMIN_TOKEN;
+
 const signupSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
+  full_name: z.string().min(2, 'Name must be at least 2 characters'),
+  email_id: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  phone: z.string().optional(),
+  phone_number: z.string().optional(),
+  address: z.string().min(5, 'Address must be at least 5 characters'),
+  age: z.string().min(1, 'Age is required'),
+  gender: z.string().min(1, 'Gender is required'),
+  blood_group: z.string().min(1, 'Blood group is required'),
 })
 
 export async function POST(request: NextRequest) {
@@ -17,42 +24,67 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validatedData = signupSchema.parse(body)
     
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: validatedData.email }
-    })
-    
-    if (existingUser) {
+    // Split name into first and last name
+    const nameParts = validatedData.full_name.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Create user in Directus
+    const directusRes = await directusApi.registerUser({
+        email: validatedData.email_id,
+        password: validatedData.password,
+        first_name: firstName,
+        last_name: lastName
+  }) as any;
+
+    if (!directusRes) {
+      // Handle Directus errors
+      const errorMessage =
+        ((typeof directusRes === 'object' && (directusRes as any).errors?.[0]?.message) as string) ||
+        'Signup failed';
+
+      // Check for duplicate email error
+      const lower = String(errorMessage).toLowerCase();
+      if (lower.includes('duplicate') || lower.includes('unique')) {
+        return NextResponse.json(
+          { message: 'User already exists with this email' },
+          { status: 400 }
+        );
+      }
+
       return NextResponse.json(
-        { message: 'User already exists with this email' },
+        { message: errorMessage || 'Signup failed' },
         { status: 400 }
-      )
+      );
+    }
+
+    const personalInfoRes = await directusService.createPersonalInformation({
+      full_name: validatedData.full_name,
+      phone_number: validatedData.phone_number,
+      email_id: validatedData.email_id,
+      address: validatedData.address,
+      age: parseInt(validatedData.age),
+      gender: validatedData.gender,
+      blood_group: validatedData.blood_group,
+      password: validatedData.password,
+      user_id: directusRes.id,
+    });
+    
+    if (!personalInfoRes) {
+      console.error('Failed to create personal information:', personalInfoRes);
     }
     
-    // Hash password
-    const hashedPassword = await bcrypt.hash(validatedData.password, 12)
-    
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name: validatedData.name,
-        email: validatedData.email,
-        password: hashedPassword,
-        phone: validatedData.phone,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        createdAt: true,
-      }
-    })
-    
+    // Return success response (exclude sensitive data)
     return NextResponse.json(
       { 
         message: 'User created successfully',
-        user 
+        user: {
+          id: directusRes.id,
+          email: directusRes.email,
+          first_name: directusRes.first_name,
+          last_name: directusRes.last_name,
+          phone: validatedData.phone_number,
+        }
       },
       { status: 201 }
     )

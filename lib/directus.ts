@@ -15,7 +15,7 @@ const DIRECTUS_URL =
 // Create a Directus client with auth support
 const client = createDirectus(DIRECTUS_URL)
   .with(rest())
-  .with(authentication());
+  // .with(authentication());
 
 class DirectusAPI {
   private client: typeof client;
@@ -27,7 +27,6 @@ class DirectusAPI {
   // ✅ Native login
   async loginUser(email: string, password: string) {
     try {
-      console.log("Email", email, "Password", password)
       const auth = await this.client.request(login(email, password));
 
       const me = await this.client.request(
@@ -75,20 +74,24 @@ async registerUser(userData: {
   email: string;
   password: string;
   first_name?: string;
+  last_name?: string;
 }) {
   try {
-    const newUser = await this.client.request(
-      createItem("users", {
+    const newUser = await this.client.request(() => ({
+      path: '/users',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         email: userData.email,
         password: userData.password,
-        first_name: userData.first_name,
-        role: process.env.DIRECTUS_DEFAULT_ROLE_ID as string, // must exist
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || '',
+        role: process.env.DIRECTUS_USER_ROLE_ID, // must exist
         status: 'active',
-      })
-    );
-
-    console.log("New user:", newUser);
-
+      }),
+    }));
     
     return newUser;
   } catch (error) {

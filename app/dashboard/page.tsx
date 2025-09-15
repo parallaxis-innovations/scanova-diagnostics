@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
-import { directusService } from "@/lib/directus-service";
+import { directusService } from "@/lib/directus";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();

@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
-import { directusService } from "./directus-service";
+import { directusService } from "./directus";
 
 export async function getSession() {
   return await getServerSession(authOptions);

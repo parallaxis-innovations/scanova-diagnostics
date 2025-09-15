@@ -1,5 +1,5 @@
 import { directusApi } from '@/lib/directus';
-import { directusService } from '@/lib/directus-service';
+import { directusService } from '@/lib/directus';
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 

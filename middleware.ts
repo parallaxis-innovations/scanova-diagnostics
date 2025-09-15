@@ -38,6 +38,8 @@ export default withAuth(
         if (pathname === '/' || 
             pathname === '/login' || 
             pathname === '/signup' || 
+            pathname === '/forgot-password'||
+            pathname === '/reset-password' ||
             pathname.startsWith('/api/auth') ||
             pathname.startsWith('/api/signup') ||
             pathname.startsWith('/home-collection') ||
@@ -63,6 +65,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public files (public folder)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public|api/book-collection).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public|api/*).*)',
   ],
 };

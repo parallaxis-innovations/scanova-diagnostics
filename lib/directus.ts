@@ -34,7 +34,7 @@ class DirectusService {
   // Generic fetch method for Directus API
   private async directusFetch(endpoint: string, options: RequestInit = {}) {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const defaultHeaders = {
       'Content-Type': 'application/json',
     };
@@ -51,7 +51,12 @@ class DirectusService {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.errors?.[0]?.message || 'Directus API error');
+      console.error("Directus API Error:", {
+        url,
+        status: response.status,
+        error: data.errors?.[0]?.message || data.message
+      });
+      throw new Error(data.errors?.[0]?.message || data.message || 'Directus API error');
     }
 
     return data;
@@ -101,7 +106,7 @@ class DirectusService {
           status: 'active',
         }),
       }));
-      
+
       return newUser;
     } catch (error) {
       console.error("❌ Directus register failed:", error);
@@ -195,7 +200,7 @@ class DirectusService {
   async getCollection(collection: string, accessToken: string, params: Record<string, any> = {}) {
     const queryString = new URLSearchParams(params).toString();
     const endpoint = `/items/${collection}${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.directusFetch(endpoint, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -273,8 +278,14 @@ class DirectusService {
     userId: string,
     accessToken?: string
   ): Promise<any> {
+    // Specify only the fields that exist to avoid schema conflicts
+    const fields = [
+      'id', 'status', 'user_created', 'date_created', 'user_updated', 'date_updated',
+      'full_name', 'phone_number', 'email_id', 'address', 'age', 'gender', 'blood_group', 'user_id'
+    ].join(',');
+    
     return this.directusFetch(
-      `/items/personal_information?limit=1&filter[user_id][_eq]=${userId}`,
+      `/items/personal_information?fields=${fields}&limit=1&filter[user_id][_eq]=${userId}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken || this.adminToken}`,
@@ -316,11 +327,22 @@ class DirectusService {
 
   // Medical information helpers
   async getMedicalInformationByUserId(userId: string, accessToken: string) {
-    return this.directusFetch(`/items/medical_information?limit=1&filter[users][_eq]=${userId}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    try {
+      const url = `/items/medical_information?filter[users][_eq]=${userId}&limit=1`;
+
+      return await this.directusFetch(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching medical info:", error);
+      return { data: [] };
+    }
   }
 
   async upsertMedicalInformation(
@@ -329,30 +351,40 @@ class DirectusService {
       pre_existing_conditions: string;
       chronic_illnesses: string;
       allergies: string;
-      medical_information: string;
     }>,
     accessToken: string
   ) {
-    const existing = await this.getMedicalInformationByUserId(userId, accessToken);
-    const item = existing?.data?.[0];
-    const payload = {
-      ...data,
-      users: userId,
-    };
-    console.log("item",JSON.stringify(item, null, 2));
-    console.log("item",JSON.stringify(payload, null, 2));
-    if (item?.id) {
-      return this.directusFetch(`/items/medical_information/${item.id}`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ ...data, users: userId }),
-      });
+    if (!userId) {
+      throw new Error('User ID is required');
     }
-    return this.directusFetch('/items/medical_information', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
-      body: JSON.stringify({ ...data, users: userId, status: 'published' }),
-    });
+
+    try {
+      const existing = await this.getMedicalInformationByUserId(userId, accessToken);
+      const existingRecord = existing?.data?.[0];
+
+      const payload = {
+        ...data,
+        users: userId,
+        status: 'published'
+      };
+
+      if (existingRecord?.id) {
+        return await this.directusFetch(`/items/medical_information/${existingRecord.id}`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify(data),
+        });
+      } else {
+        return await this.directusFetch('/items/medical_information', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify(payload),
+        });
+      }
+    } catch (error) {
+      console.error("Error upserting medical info:", error);
+      throw error;
+    }
   }
 }
 

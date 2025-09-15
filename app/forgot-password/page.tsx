@@ -31,14 +31,11 @@ const handleSubmit = async (e: React.FormEvent) => {
   setIsLoading(true);
 
   try {
-    console.log("here it is");
     const res = await fetch("/api/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    console.log("resss", res);
-
     const data = await res.json();
 
     if (!res.ok) {

@@ -3,7 +3,6 @@ import { directusApi } from "@/lib/directus";
 
 export async function POST(req: Request) {
   try {
-      console.log("email");
     const { email } = await req.json();
     await directusApi.forgotPassword(email);
     return NextResponse.json({ success: true });

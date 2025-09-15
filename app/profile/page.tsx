@@ -25,7 +25,6 @@ type MedicalForm = {
   pre_existing_conditions: string;
   chronic_illnesses: string;
   allergies: string;
-  medical_information: string;
 };
 
 export default function ProfilePage() {
@@ -47,7 +46,6 @@ export default function ProfilePage() {
     pre_existing_conditions: "",
     chronic_illnesses: "",
     allergies: "",
-    medical_information: "",
   });
 
   const headers = useMemo(() => ({
@@ -87,7 +85,7 @@ export default function ProfilePage() {
             pre_existing_conditions: mJson.data.pre_existing_conditions ?? "",
             chronic_illnesses: mJson.data.chronic_illnesses ?? "",
             allergies: mJson.data.allergies ?? "",
-            medical_information: mJson.data.medical_information ?? "",
+
           });
         }
       } finally {
@@ -134,7 +132,6 @@ export default function ProfilePage() {
 
   async function saveMedical() {
     setSavingMedical(true);
-    console.log("medical",medical);
     try {
       const res = await fetch("/api/profile/medical", {
         method: "POST",
@@ -205,7 +202,6 @@ export default function ProfilePage() {
               <Textarea placeholder="Pre-existing conditions" value={medical.pre_existing_conditions} onChange={(e) => setMedical({ ...medical, pre_existing_conditions: e.target.value })} />
               <Textarea placeholder="Chronic illnesses" value={medical.chronic_illnesses} onChange={(e) => setMedical({ ...medical, chronic_illnesses: e.target.value })} />
               <Textarea placeholder="Allergies" value={medical.allergies} onChange={(e) => setMedical({ ...medical, allergies: e.target.value })} />
-              <Textarea placeholder="Medical information" value={medical.medical_information} onChange={(e) => setMedical({ ...medical, medical_information: e.target.value })} />
               <Button onClick={saveMedical} disabled={savingMedical}>
                 {savingMedical ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Save Medical

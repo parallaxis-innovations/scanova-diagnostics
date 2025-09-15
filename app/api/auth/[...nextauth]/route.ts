@@ -40,7 +40,6 @@ interface ExtendedSession {
 }
 
 async function refreshAccessToken(token: any) {
-  console.log("token", token);
   try {
     const res = await fetch(`${DIRECTUS_API_URL}/auth/refresh`, {
       method: "POST",
@@ -49,7 +48,6 @@ async function refreshAccessToken(token: any) {
     });
 
     const refreshedData = await res.json();
-    console.log("refreshedData", JSON.stringify(refreshedData, null, 2));
     
     if (!res.ok || !refreshedData.data) {
       console.log("Token refresh failed, forcing re-authentication");
@@ -135,7 +133,6 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        console.log("user", user);
         const extendedUser = user as any;
         return {
           ...token,
@@ -150,7 +147,6 @@ export const authOptions: NextAuthOptions = {
 
       // Check if token has expired (with 5 minute buffer)
       const isExpired = Date.now() >= (token.expires as number) - (5 * 60 * 1000);
-      console.log("Token expired check:", isExpired, "Current time:", Date.now(), "Expires:", token.expires);
 
       // If token is not expired, return it
       if (!isExpired) {
@@ -161,10 +157,9 @@ export const authOptions: NextAuthOptions = {
       console.log("Token expired, attempting refresh...");
       return await refreshAccessToken(token);
     },
-    async session({ session, token }) {
+    async session({ session, token }) {      
       // If there's a token error, force re-authentication
       if (token.error === "RefreshAccessTokenError") {
-        console.log("Session has token error, forcing re-authentication");
         return {
           ...session,
           user: {

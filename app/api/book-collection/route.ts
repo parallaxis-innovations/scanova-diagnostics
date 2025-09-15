@@ -215,11 +215,9 @@ export async function POST(request: NextRequest) {
     try {
       if (formData.email) {
         const mail = await transporter.sendMail(patientMailOptions);
-        console.log('✅ Email sent to patient:', mail.messageId);
       }
       if (process.env.ADMIN_EMAIL) {
         const adminMail = await transporter.sendMail(adminMailOptions);
-        console.log('✅ Email sent to admin:', adminMail.messageId);
       }
     } catch (mailError) {
       console.error('❌ Error sending email(s):', mailError);

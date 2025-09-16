@@ -28,7 +28,21 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-// ... (Type definitions and hooks remain unchanged)
+type PersonalForm = {
+  full_name: string;
+  phone_number: string;
+  email_id: string;
+  address: string;
+  age: string;
+  gender: string;
+  blood_group: string;
+};
+
+type MedicalForm = {
+  pre_existing_conditions: string;
+  chronic_illnesses: string;
+  allergies: string;
+};
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -66,55 +80,74 @@ export default function ProfilePage() {
   useEffect(() => {
     async function load() {
       if (!session?.user) return;
+      
+      setLoading(true);
+      
       try {
-        const [pRes, mRes, fRes] = await Promise.all([
-          fetch("/api/profile/personal", { headers }),
-          fetch("/api/profile/medical", { headers }),
-          fetch("/api/profile/family", { headers }),
-        ]);
+        console.log("Loading profile data for user:", session.user);
+        
+        // Load personal information
+        const pRes = await fetch("/api/profile/personal", { headers });
         const pJson = await pRes.json();
-        const mJson = await mRes.json();
-        const fJson = await fRes.json();
+        console.log("Personal data response:", pJson);
 
         if (pJson?.data) {
-          setPersonal((prev) => ({
-            ...prev,
-            full_name: pJson.data.full_name ?? prev.full_name,
-            phone_number: pJson.data.phone_number ?? prev.phone_number,
-            email_id:
-              pJson.data.email_id ??
-              (session.user?.email as string) ??
-              prev.email_id,
-            address: pJson.data.address ?? prev.address,
-            age: String(pJson.data.age ?? prev.age),
-            gender: pJson.data.gender ?? prev.gender,
-            blood_group: pJson.data.blood_group ?? prev.blood_group,
-          }));
-        } else if (session.user) {
+          console.log("Setting personal data:", pJson.data);
+          setPersonal({
+            full_name: pJson.data.full_name || "",
+            phone_number: pJson.data.phone_number || "",
+            email_id: pJson.data.email_id || (session.user?.email as string) || "",
+            address: pJson.data.address || "",
+            age: pJson.data.age ? String(pJson.data.age) : "",
+            gender: pJson.data.gender || "",
+            blood_group: pJson.data.blood_group || "",
+          });
+        } else {
+          // Set default values from session
+          console.log("No personal data found, using session defaults");
           setPersonal((prev) => ({
             ...prev,
             email_id: (session.user?.email as string) || "",
-            full_name: (session.user?.name as string) || prev.full_name,
+            full_name: (session.user?.name as string) || "",
           }));
         }
 
+        // Load medical information
+        const mRes = await fetch("/api/profile/medical", { headers });
+        const mJson = await mRes.json();
+        console.log("Medical data response:", mJson);
+
         if (mJson?.data) {
+          console.log("Setting medical data:", mJson.data);
           setMedical({
-            pre_existing_conditions: mJson.data.pre_existing_conditions ?? "",
-            chronic_illnesses: mJson.data.chronic_illnesses ?? "",
-            allergies: mJson.data.allergies ?? "",
+            pre_existing_conditions: mJson.data.pre_existing_conditions || "",
+            chronic_illnesses: mJson.data.chronic_illnesses || "",
+            allergies: mJson.data.allergies || "",
           });
+        } else {
+          console.log("No medical data found, keeping empty defaults");
         }
 
+        // Load family information
+        const fRes = await fetch("/api/profile/family", { headers });
+        const fJson = await fRes.json();
+        console.log("Family data response:", fJson);
+        
         if (fJson?.data) {
           setFamily(fJson.data);
         }
+        
+      } catch (error) {
+        console.error("Error loading profile data:", error);
       } finally {
         setLoading(false);
       }
     }
-    load();
-  }, [session, headers]);
+    
+    if (session?.user && status === "authenticated") {
+      load();
+    }
+  }, [session, status, headers]);
 
   if (status === "loading" || loading) {
     return (
@@ -151,14 +184,14 @@ export default function ProfilePage() {
     hidden: { opacity: 0, y: 20 },
     visible: { 
       opacity: 1, 
-      y: 0,
-      transition: { duration: 0.5, ease: "easeOut" }
+      y: 0
     }
   };
 
   async function savePersonal() {
     setSavingPersonal(true);
     try {
+      console.log("Saving personal data:", personal);
       const res = await fetch("/api/profile/personal", {
         method: "POST",
         headers,
@@ -167,7 +200,16 @@ export default function ProfilePage() {
           age: personal.age ? Number(personal.age) : undefined,
         }),
       });
-      await res.json();
+      const result = await res.json();
+      console.log("Save personal response:", result);
+      
+      if (!res.ok) {
+        console.error("Failed to save personal data:", result);
+      } else {
+        console.log("Personal data saved successfully");
+      }
+    } catch (error) {
+      console.error("Error saving personal data:", error);
     } finally {
       setSavingPersonal(false);
     }
@@ -176,12 +218,22 @@ export default function ProfilePage() {
   async function saveMedical() {
     setSavingMedical(true);
     try {
+      console.log("Saving medical data:", medical);
       const res = await fetch("/api/profile/medical", {
         method: "POST",
         headers,
         body: JSON.stringify(medical),
       });
-      await res.json();
+      const result = await res.json();
+      console.log("Save medical response:", result);
+      
+      if (!res.ok) {
+        console.error("Failed to save medical data:", result);
+      } else {
+        console.log("Medical data saved successfully");
+      }
+    } catch (error) {
+      console.error("Error saving medical data:", error);
     } finally {
       setSavingMedical(false);
     }
@@ -199,6 +251,7 @@ export default function ProfilePage() {
           age: "",
           gender: "",
           blood_group: "",
+          isNew: true, // Flag to identify new unsaved family members
         },
       ]);
     }
@@ -210,21 +263,89 @@ export default function ProfilePage() {
     );
   }
 
-  async function saveFamily(member: any) {
-    await fetch("/api/profile/family", {
-      method: "POST",
-      headers,
-      body: JSON.stringify(member),
-    });
+  async function saveFamily(member: any, index: number) {
+    try {
+      let result;
+      
+      if (member.isNew || !member.id) {
+        // Create new family member
+        console.log("Creating new family member:", member);
+        const response = await fetch("/api/profile/family", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            full_name: member.full_name,
+            phone_number: member.phone_number,
+            email_id: member.email_id,
+            address: member.address,
+            age: member.age ? Number(member.age) : undefined,
+            gender: member.gender,
+            blood_group: member.blood_group,
+          }),
+        });
+        
+        result = await response.json();
+        
+        if (response.ok) {
+          // Update the local family array with the new member data
+          const updatedFamily = [...family];
+          updatedFamily[index] = {
+            ...member,
+            id: result.data?.personalInfo?.id || result.data?.user?.id,
+            isNew: false
+          };
+          setFamily(updatedFamily);
+        } else {
+          console.error("Error creating family member:", result);
+        }
+      } else {
+        // Update existing family member
+        console.log("Updating family member:", member);
+        const response = await fetch("/api/profile/family", {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({
+            id: member.id,
+            full_name: member.full_name,
+            phone_number: member.phone_number,
+            email_id: member.email_id,
+            address: member.address,
+            age: member.age ? Number(member.age) : undefined,
+            gender: member.gender,
+            blood_group: member.blood_group,
+          }),
+        });
+        
+        result = await response.json();
+        
+        if (response.ok) {
+        } else {
+          console.error("Error updating family member:", result);
+        }
+      }
+    } catch (error) {
+      console.error("Error saving family member:", error);
+    }
   }
 
   async function deleteFamily(id: string) {
-    await fetch("/api/profile/family", {
-      method: "DELETE",
-      headers,
-      body: JSON.stringify({ id }),
-    });
-    setFamily(family.filter((f) => f.id !== id));
+    try {
+      const response = await fetch("/api/profile/family", {
+        method: "DELETE",
+        headers,
+        body: JSON.stringify({ id }),
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        setFamily(family.filter((f) => f.id !== id));
+      } else {
+        console.error("Error deleting family member:", result);
+      }
+    } catch (error) {
+      console.error("Error deleting family member:", error);
+    }
   }
 
   const tabs = [
@@ -494,7 +615,7 @@ export default function ProfilePage() {
               transition={{ duration: 0.3 }}
             >
               <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
-                <CardHeader className="bg-teal-gradient text-white">
+                <CardHeader className="bg-scanova-gradient text-white">
                   <CardTitle className="flex items-center gap-3 text-xl">
                     <Heart className="w-6 h-6" />
                     Medical Information
@@ -559,7 +680,7 @@ export default function ProfilePage() {
                       <Button 
                         onClick={saveMedical} 
                         disabled={savingMedical}
-                        className="bg-teal-gradient hover:bg-scanova/teal px-8 py-3 rounded-full font-semibold shadow-lg"
+                        className="bg-scanova-gradient hover:bg-scanova/teal px-8 py-3 rounded-full font-semibold shadow-lg"
                       >
                         {savingMedical ? (
                           <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -584,7 +705,7 @@ export default function ProfilePage() {
               transition={{ duration: 0.3 }}
             >
               <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
-                <CardHeader className="bg-teal-gradient text-white">
+                <CardHeader className="bg-scanova-gradient text-white">
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-3 text-xl">
                       <Users className="w-6 h-6" />
@@ -610,7 +731,7 @@ export default function ProfilePage() {
                       <Users className="w-16 h-16 text-scanova/text-body mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-scanova/text-header mb-2">No family members added</h3>
                       <p className="text-scanova/text-body mb-6">Add up to 2 family members to your profile</p>
-                      <Button onClick={addFamily} className="bg-teal-gradient hover:bg-scanova/teal px-6 py-3 rounded-full">
+                      <Button onClick={addFamily} className="bg-scanova-gradient hover:bg-scanova/teal px-6 py-3 rounded-full">
                         <Plus className="w-5 h-5 mr-2" />
                         Add First Member
                       </Button>
@@ -704,11 +825,11 @@ export default function ProfilePage() {
                           <div className="flex justify-end mt-4">
                             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                               <Button 
-                                onClick={() => saveFamily(member)}
-                                className="bg-teal-gradient hover:bg-scanova/teal px-6 py-2 rounded-full"
+                                onClick={() => saveFamily(member, idx)}
+                                className="bg-scanova-gradient hover:bg-scanova/teal px-6 py-2 rounded-full"
                               >
                                 <Save className="w-4 h-4 mr-2" />
-                                Save Member
+                                {member.isNew || !member.id ? 'Create Member' : 'Save Member'}
                               </Button>
                             </motion.div>
                           </div>

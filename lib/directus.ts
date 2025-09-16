@@ -152,39 +152,82 @@ class DirectusService {
     }
   }
 
-  // ✅ Forgot password
+  async getUserByEmail(email: string) {
+    try {
+      const response = await this.directusFetch(`/users?filter[email][_eq]=${email}&limit=1`, {
+        headers: {
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+      });
+      
+      return response?.data?.[0] || null;
+    } catch (error) {
+      console.error("❌ Get user by email failed:", error);
+      return null;
+    }
+  }
+
+  // ✅ Update user password directly (for password reset)
+  async updateUserPassword(userId: string, newPassword: string) {
+    try {
+      const response = await this.directusFetch(`/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+        body: JSON.stringify({
+          password: newPassword,
+        }),
+      });
+      
+      return {
+        success: true,
+        message: "Password updated successfully"
+      };
+    } catch (error) {
+      console.error("❌ Update user password failed:", error);
+      throw error;
+    }
+  }
+
+  // ✅ Custom forgot password with email service
   async forgotPassword(email: string) {
     try {
-      const res = await fetch(`${DIRECTUS_URL}/auth/password/request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      // First, check if user exists
+      const user = await this.getUserByEmail(email);
+      
+      if (!user) {
+        // Don't reveal if user exists or not for security
+        return {
+          success: true,
+          message: "If an account with that email exists, we've sent you a password reset link."
+        };
+      }
 
-      if (!res.ok) throw new Error("Failed to request password reset");
-      return true;
+      // Import email service dynamically to avoid issues
+      const { emailService } = await import('./email');
+      
+      // Generate reset token
+      const resetToken = emailService.generateResetToken(user.id, user.email);
+      
+      // Send email
+      await emailService.sendPasswordResetEmail(user.email, resetToken);
+      
+      return {
+        success: true,
+        message: "Password reset email sent successfully"
+      };
     } catch (error) {
       console.error("❌ Forgot password failed:", error);
-      throw error;
+      // Don't reveal actual error to user for security
+      return {
+        success: true,
+        message: "If an account with that email exists, we've sent you a password reset link."
+      };
     }
   }
 
-  // ✅ Reset password
-  async resetPassword(token: string, password: string) {
-    try {
-      const res = await fetch(`${DIRECTUS_URL}/auth/password/reset`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
-      });
 
-      if (!res.ok) throw new Error("Failed to reset password");
-      return true;
-    } catch (error) {
-      console.error("❌ Reset password failed:", error);
-      throw error;
-    }
-  }
 
   // Refresh token
   async refreshToken(refreshToken: string) {

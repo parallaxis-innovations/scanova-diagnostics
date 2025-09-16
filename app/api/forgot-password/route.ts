@@ -4,9 +4,37 @@ import { directusApi } from "@/lib/directus";
 export async function POST(req: Request) {
   try {
     const { email } = await req.json();
-    await directusApi.forgotPassword(email);
-    return NextResponse.json({ success: true });
+
+    if (!email) {
+      return NextResponse.json(
+        { success: false, message: "Email is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { success: false, message: "Please enter a valid email address" },
+        { status: 400 }
+      );
+    }
+
+    const result = await directusApi.forgotPassword(email);
+    
+    return NextResponse.json({
+      success: true,
+      message: "If an account with that email exists, we've sent you a password reset link. Please check your email and spam folder."
+    });
+
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    console.error("Forgot password API error:", error);
+    
+    // Don't reveal if email exists or not for security reasons
+    return NextResponse.json({
+      success: true,
+      message: "If an account with that email exists, we've sent you a password reset link. Please check your email and spam folder."
+    });
   }
 }

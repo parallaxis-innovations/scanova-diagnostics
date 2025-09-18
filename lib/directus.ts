@@ -27,8 +27,8 @@ class DirectusService {
 
   constructor() {
     this.client = client;
-    this.baseUrl = process.env.NEXT_DIRECTUS_API_URL || "http://185.165.240.191:8057";
-    this.adminToken = process.env.DIRECTUS_STATIC_ADMIN_TOKEN || "a8MtC6ERaY8fbWMhTzSgLdKzXTb-9w4s";
+    this.baseUrl = process.env.NEXT_DIRECTUS_API_URL!;
+    this.adminToken = process.env.DIRECTUS_STATIC_ADMIN_TOKEN!;
   }
 
   // Generic fetch method for Directus API

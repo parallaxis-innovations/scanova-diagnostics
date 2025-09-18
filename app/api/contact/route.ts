@@ -14,7 +14,6 @@ export async function POST(request: NextRequest) {
         pass: process.env.SMTP_PASS,
       },
       tls: {
-        rejectUnauthorized: false,
         ciphers: "SSLv3",
       },
       requireTLS: true,

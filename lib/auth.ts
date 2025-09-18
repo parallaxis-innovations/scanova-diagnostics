@@ -2,83 +2,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { getServerSession, NextAuthOptions } from "next-auth";
 // import { authOptions } from "@/app/api/auth/[[...nextauth]]/route";
 import { redirect } from "next/navigation";
-import { prisma } from "./prisma";
-import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-
-
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    CredentialsProvider({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        })
-
-        if (!user || !user.password) {
-          return null
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        }
-      }
-    })
-  ],
-  session: {
-    strategy: "jwt"
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        return {
-          ...token,
-          id: user.id,
-          role: user.role,
-        }
-      }
-      return token
-    },
-    async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id as string,
-          role: token.role as string,
-        }
-      }
-    }
-  },
-  pages: {
-    signIn: "/login",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-}
+import { directusService } from "./directus";
 
 export async function getSession() {
   return await getServerSession(authOptions);
@@ -104,5 +28,40 @@ export async function requireNoAuth() {
   
   if (session?.user) {
     redirect("/");
+  }
+}
+
+export async function requireAdmin() {
+  const session = await getSession();
+  
+  if (!session?.user) {
+    redirect("/login");
+  }
+  
+  // Check if user has admin role
+  if ((session.user as any).role !== 'admin') {
+    redirect("/unauthorized");
+  }
+  
+  return session;
+}
+
+export async function getUserData(userId: string, accessToken: string) {
+  try {
+    const response = await directusService.getUserById(userId, accessToken);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return null;
+  }
+}
+
+export async function updateUserData(userId: string, userData: any, accessToken: string) {
+  try {
+    const response = await directusService.updateUser(userId, userData, accessToken);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user data:', error);
+    throw error;
   }
 }

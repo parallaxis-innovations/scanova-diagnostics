@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { directusApi } from "@/lib/directus";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -17,33 +18,37 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const fadeUpVariant = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
-  };
+const fadeUpVariant = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Something went wrong");
-      }
-      setSuccess("Password reset email sent. Please check your inbox.");
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+// ✅ fetch call goes inside handleSubmit
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
+  setSuccess("");
+  setIsLoading(true);
+
+  try {
+    const res = await fetch("/api/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Something went wrong");
     }
-  };
+
+    setSuccess("Password reset email sent. Please check your inbox.");
+  } catch (err: any) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center px-6 py-12">
@@ -54,7 +59,7 @@ export default function ForgotPasswordPage() {
         className="w-full max-w-5xl flex flex-col md:flex-row bg-white shadow-xl rounded-2xl overflow-hidden"
       >
         <div className="relative w-full md:w-1/2 bg-scanova-primary flex flex-col justify-end p-8 text-white">
-          <Image src="/login2.png" alt="Doctor" fill className="object-cover opacity-90" />
+          <Image src="/login-2.png" alt="Doctor" fill className="object-cover opacity-90" />
           <div className="absolute inset-0 bottom-0 bg-gradient-to-t from-[#0E7AA4] via-[#1E517C]/30 to-transparent z-10 pointer-events-none"></div>
           <div className="relative z-20">
             <h1 className="text-3xl font-bold mb-2">Reset your password</h1>

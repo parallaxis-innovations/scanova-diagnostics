@@ -163,7 +163,7 @@ export default function Footer() {
 						</Link>
 						
 						<Link
-							href="/medical-desclaimer"
+							href="/medical-disclaimer"
 							className="text-gray-200 hover:text-white text-sm transition-colors"
 						>
 							Medical Disclaimer

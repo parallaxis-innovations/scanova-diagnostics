@@ -17,10 +17,10 @@ import {
 	Calendar,
 	FileText,
 	Settings,
-  MapPinHouse,
-  UserPen,
-  UserCheck,
-  HeartPulse
+	MapPinHouse,
+	UserPen,
+	UserCheck,
+	HeartPulse,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -35,6 +35,19 @@ export default function SignupPage() {
 	});
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
+
+	const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value.replace(/\D/g, ""); // only digits allowed
+		if (value.length > 10) return; // stop extra digits
+
+		setFormData({ ...formData, phone_number: value });
+
+		if (value.length !== 10) {
+			setError("Phone number must be exactly 10 digits");
+		} else {
+			setError("");
+		}
+	};
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { id, value, type, checked } = e.target;
@@ -56,19 +69,24 @@ export default function SignupPage() {
 
 		try {
 			const res = await fetch("/api/signup", {
-			  method: "POST",
-			  headers: { "Content-Type": "application/json" },
-			  body: JSON.stringify({
-			    name: formData.name,
-			    email: formData.email,
-			    phone: formData.phone,
-			    password: formData.password,
-			  }),
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					full_name: formData.full_name,
+					email_id: formData.email_id,
+					phone_number: formData.phone_number,
+					password: formData.password,
+					address: formData.address,
+					age: formData.age,
+					gender: formData.gender,
+					blood_group: formData.blood_group,
+				}),
 			});
+
 			const data = await res.json();
 
 			if (!res.ok) {
-				throw new Error("Something went wrong");
+				throw new Error(data.message || "Something went wrong");
 			}
 
 			setSuccess("Account created successfully! Redirecting to login...");
@@ -93,7 +111,7 @@ export default function SignupPage() {
 			>
 				<div className="relative w-full md:w-1/2 bg-scanova-primary flex flex-col justify-end p-8 text-white">
 					<Image
-						src="/login2.png"
+						src="/login-2.png"
 						alt="Welcome to Scanova Diagnostics"
 						fill
 						className="object-cover opacity-90"
@@ -157,18 +175,21 @@ export default function SignupPage() {
 								</div>
 
 								<div>
-									<Label htmlFor="phone">Phone Number</Label>
+									<Label htmlFor="phone_number">Phone Number</Label>
 									<div className="relative mt-1">
 										<Input
 											id="phone"
 											type="tel"
-											value={formData.phone}
-											onChange={handleChange}
+											value={formData.phone_number}
+											onChange={handlePhoneChange}
 											placeholder="Enter your phone number"
 											className="pl-10 h-12"
 										/>
 										<Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 									</div>
+									{error && (
+										<p className="text-red-500 text-sm mt-1">{error}</p>
+									)}
 								</div>
 
 								<div>
@@ -186,6 +207,89 @@ export default function SignupPage() {
 										<Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 									</div>
 								</div>
+
+								<div>
+									<Label htmlFor="address">Address</Label>
+									<div className="relative mt-1">
+										<Input
+											id="address"
+											type="text"
+											value={formData.address}
+											onChange={handleChange}
+											placeholder="Enter your address"
+											className="pl-10 h-12"
+											required
+										/>
+										<MapPinHouse className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+									</div>
+								</div>
+
+								<div>
+									<Label htmlFor="age">Age</Label>
+									<div className="relative mt-1">
+										<Input
+											id="age"
+											type="number"
+											value={formData.age}
+											onChange={handleChange}
+											placeholder="Enter your age"
+											className="pl-10 h-12"
+											required
+										/>
+										<UserPen className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+									</div>
+								</div>
+
+								<div>
+									<Label htmlFor="gender">Gender</Label>
+									<div className="relative mt-1">
+										<select
+											id="gender"
+											value={formData.gender}
+											onChange={(e) =>
+												setFormData({ ...formData, gender: e.target.value })
+											}
+											className="pl-9 pr-3 h-12 w-full border rounded-lg"
+											required
+										>
+											<option value="">Select Gender</option>
+											<option value="Male">Male</option>
+											<option value="Female">Female</option>
+											<option value="Other">Other</option>
+										</select>
+										<UserCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+									</div>
+								</div>
+
+								<div>
+									<Label htmlFor="blood_group">Blood Group</Label>
+									<div className="relative mt-1">
+										<select
+											id="blood_group"
+											value={formData.blood_group}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													blood_group: e.target.value,
+												})
+											}
+											className="pl-9 pr-3 h-12 w-full border rounded-lg"
+											required
+										>
+											<option value="">Select Blood Group</option>
+											<option value="A+">A+</option>
+											<option value="A-">A-</option>
+											<option value="B+">B+</option>
+											<option value="B-">B-</option>
+											<option value="O+">O+</option>
+											<option value="O-">O-</option>
+											<option value="AB+">AB+</option>
+											<option value="AB-">AB-</option>
+										</select>
+										<HeartPulse className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+									</div>
+								</div>
+
 								<div className="flex items-center space-x-2">
 									<Checkbox
 										id="agree"
@@ -197,14 +301,14 @@ export default function SignupPage() {
 									<Label htmlFor="agree" className="text-sm text-gray-600">
 										I agree to the{" "}
 										<Link
-											href="/terms"
+											href="/terms-conditions"
 											className="text-scanova-primary underline"
 										>
 											Terms of Service
 										</Link>{" "}
 										and{" "}
 										<Link
-											href="/privacy"
+											href="/privacy-policy"
 											className="text-scanova-primary underline"
 										>
 											Privacy Policy

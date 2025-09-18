@@ -93,7 +93,7 @@ export default function LoginPage() {
       >
         <div className="relative w-full md:w-1/2 bg-scanova-primary flex flex-col justify-end p-8 text-white">
           <Image
-            src="/login2.png"
+            src="/login-2.png"
             alt="Doctor"
             fill
             className="object-cover opacity-90"

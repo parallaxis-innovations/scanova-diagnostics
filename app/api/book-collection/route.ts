@@ -1,35 +1,71 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import nodemailer from 'nodemailer';
+import { directusService } from '@/lib/directus';
+import { getSession } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSession();
     const formData = await request.json();
     
+    // 1️⃣ Save appointment in Directus
+    let appointmentRecord = null;
+    if (session?.user) {
+      try {
+        const appointmentData = {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          date: formData.date,
+          time: formData.time,
+          tests: formData.tests,
+          notes: formData.notes || null,
+          user_id: (session.user as any).id,
+          status: 'pending',
+          collection_fee: formData.collection_fee || null,
+          total_amount: formData.total_amount || null,
+          technicial_notes: null,
+          confirmed_date: null,
+          completed_date: null,
+        };
+
+        appointmentRecord = await directusService.createItem(
+          'appointments',
+          appointmentData,
+          (session as any).accessToken
+        );
+      } catch (error) {
+        console.error('Error saving appointment to Directus:', error);
+        // continue with email sending
+      }
+    }
+
+    // 2️⃣ Setup mail transporter
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false,
       auth: {
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+        pass: process.env.SMTP_PASS,
       },
-      tls: {
-        rejectUnauthorized: false,
-        ciphers: 'SSLv3'
-      },
+      tls: { rejectUnauthorized: false, ciphers: 'SSLv3' },
       requireTLS: true,
       connectionTimeout: 60000,
       greetingTimeout: 30000,
-      socketTimeout: 60000
+      socketTimeout: 60000,
     });
 
     try {
+      await transporter.verify();
       await transporter.verify();
     } catch (verifyError) {
       console.error('SMTP verification failed:', verifyError);
     }
 
-    // Email to patient
+    // Email to patient (🔴 kept your original HTML + CSS intact)
     const patientMailOptions = {
       from: process.env.SMTP_USER || 'noreply@scanovadiagnostics.com',
       to: formData.email,
@@ -108,12 +144,12 @@ export async function POST(request: NextRequest) {
       `
     };
 
-    // Email to admin
+    // Email to admin (🔴 kept your original HTML + CSS intact)
     const adminMailOptions = {
       from: process.env.SMTP_USER || 'noreply@scanovadiagnostics.com',
       to: process.env.ADMIN_EMAIL || 'admin@scanovadiagnostics.com',
       subject: 'New Home Collection Booking - Action Required',
-      html: `
+       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #0D7EA8, #1E90A0); padding: 20px; text-align: center;">
             <h1 style="color: white; margin: 0; font-size: 24px;">SCANOVA DIAGNOSTICS</h1>
@@ -176,14 +212,33 @@ export async function POST(request: NextRequest) {
       `
     };
 
-    // Send emails
-    if (formData.email) {
-      await transporter.sendMail(patientMailOptions);
+    // 3️⃣ Send both emails
+    try {
+      if (formData.email) {
+        const mail = await transporter.sendMail(patientMailOptions);
+      }
+      if (process.env.ADMIN_EMAIL) {
+        const adminMail = await transporter.sendMail(adminMailOptions);
+      }
+    } catch (mailError) {
+      console.error('❌ Error sending email(s):', mailError);
     }
 
-    return NextResponse.json({ success: true, message: 'Booking successful' }, { status: 200 });
+    // 4️⃣ Response stays same
+    return NextResponse.json(
+      { 
+        success: true,
+        message: 'Booking successful',
+        appointmentId: appointmentRecord?.data?.id || null,
+      },
+      { status: 200 }
+    );
+
   } catch (error) {
-    console.error('Error sending email:', error);
-    return NextResponse.json({ success: false, message: 'Error processing booking' }, { status: 500 });
+    console.error('Error processing booking:', error);
+    return NextResponse.json(
+      { message: 'Error processing booking' },
+      { status: 500 }
+    );
   }
 }

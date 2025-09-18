@@ -1,52 +1,133 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { z } from "zod";
-import bcrypt from "bcryptjs";
+import { NextResponse } from "next/server";
+import { directusApi } from "@/lib/directus";
+import { emailService } from "@/lib/email";
 
-const schema = z.object({
-  email: z.string().email("Invalid email address"),
-  token: z.string().min(1, "Token is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-
-export async function POST(request: NextRequest) {
+export async function GET(req: Request) {
   try {
-    const body = await request.json();
-    const { email, token, password } = schema.parse(body);
+    const { searchParams } = new URL(req.url);
+    const token = searchParams.get("token");
 
-    // @ts-ignore - Prisma client should include verificationToken delegate
-    const record = await prisma.verificationToken.findUnique({
-      where: { token },
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: "Reset token is required" },
+        { status: 400 }
+      );
+    }
+
+    const tokenData = emailService.verifyResetToken(token);
+    if (!tokenData) {
+      return NextResponse.json(
+        { success: false, message: "Invalid or expired reset token. Please request a new password reset." },
+        { status: 400 }
+      );
+    }
+
+    // Optional single-use enforcement: reject tokens issued before last password update
+    // If we cannot fetch user metadata (e.g., missing admin token), do not block validation here.
+    const userMeta = await directusApi.getUserMetaById(tokenData.userId);
+
+    if (userMeta?.date_updated) {
+      const lastUpdatedMs = new Date(userMeta.date_updated).getTime();
+      if (tokenData.issuedAtMs && tokenData.issuedAtMs <= lastUpdatedMs) {
+        return NextResponse.json(
+          { success: false, message: "This reset link has already been used. Please request a new one." },
+          { status: 400 }
+        );
+      }
+    }
+
+    return NextResponse.json({ success: true, message: "Token is valid" });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: "Failed to validate token" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const { token, password } = await req.json();
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: "Reset token is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!password) {
+      return NextResponse.json(
+        { success: false, message: "New password is required" },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json(
+        { success: false, message: "Password must be at least 8 characters long" },
+        { status: 400 }
+      );
+    }
+
+    // Verify the JWT token
+    const tokenData = emailService.verifyResetToken(token);
+    
+    if (!tokenData) {
+      return NextResponse.json(
+        { success: false, message: "Invalid or expired reset token. Please request a new password reset." },
+        { status: 400 }
+      );
+    }
+
+    // Optional single-use enforcement: reject tokens issued before last password update
+    const userMeta = await directusApi.getUserMetaById(tokenData.userId);
+    if (!userMeta) {
+      return NextResponse.json(
+        { success: false, message: "User account not found. Please contact support." },
+        { status: 404 }
+      );
+    }
+
+    if (userMeta.date_updated) {
+      const lastUpdatedMs = new Date(userMeta.date_updated).getTime();
+      if (tokenData.issuedAtMs && tokenData.issuedAtMs <= lastUpdatedMs) {
+        return NextResponse.json(
+          { success: false, message: "This reset link has already been used. Please request a new one." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Update the user's password directly in Directus
+    await directusApi.updateUserPassword(tokenData.userId, password);
+
+    return NextResponse.json({
+      success: true,
+      message: "Password has been successfully reset. You can now log in with your new password."
     });
 
-    if (!record || record.identifier !== email) {
-      return NextResponse.json({ message: "Invalid or expired token" }, { status: 400 });
+  } catch (error: any) {
+    console.error("❌ Password reset failed:", error);
+    
+    // Handle specific error cases
+    if (error.message?.includes('Invalid token') || error.message?.includes('expired')) {
+      return NextResponse.json(
+        { success: false, message: "Invalid or expired reset token. Please request a new password reset." },
+        { status: 400 }
+      );
     }
 
-    if (record.expires < new Date()) {
-      // @ts-ignore - Prisma client should include verificationToken delegate
-      await prisma.verificationToken.deleteMany({ where: { identifier: email } });
-      return NextResponse.json({ message: "Token expired" }, { status: 400 });
+    if (error.message?.includes('User not found')) {
+      return NextResponse.json(
+        { success: false, message: "User account not found. Please contact support." },
+        { status: 404 }
+      );
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 12);
-    await prisma.user.update({ where: { id: user.id }, data: { password: hashedPassword } });
-
-    // Invalidate used tokens
-    // @ts-ignore - Prisma client should include verificationToken delegate
-    await prisma.verificationToken.deleteMany({ where: { identifier: email } });
-
-    return NextResponse.json({ message: "Password updated successfully" }, { status: 200 });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ message: "Validation failed", errors: error.errors }, { status: 400 });
-    }
-    console.error("Reset password error:", error);
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to reset password. Please try again." },
+      { status: 500 }
+    );
   }
-} 
+}

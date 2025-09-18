@@ -116,12 +116,20 @@ export default function Navbar() {
 
 						{isAuthenticated ? (
 							<div className="flex items-center gap-4">
+								{/* Profile */}
+								<Link
+									href="/profile"
+									className="flex items-center gap-2 text-scanova-text-body hover:text-scanova-primary font-medium"
+								>
+									<span>Profile</span>
+								</Link>
+
 								{/* About us */}
 								<Link
 									href="/about"
 									className="flex items-center gap-2 text-scanova-text-body hover:text-scanova-primary font-medium"
 								>
-									<span>About </span>
+									<span>About</span>
 								</Link>
 
 								{/* Logout Button */}
@@ -181,6 +189,26 @@ export default function Navbar() {
 									{item.label}
 								</Link>
 							))}
+
+							{isAuthenticated && (
+								<Link
+									href="/profile"
+									onClick={() => setIsOpen(false)}
+									className="px-4 py-2 rounded-lg text-scanova-text-body hover:bg-gray-100 hover:text-scanova-primary transition-colors font-medium"
+								>
+									Profile
+								</Link>
+							)}
+
+							{isAuthenticated && (
+								<Link
+									href="/about"
+									onClick={() => setIsOpen(false)}
+									className="px-4 py-2 rounded-lg text-scanova-text-body hover:bg-gray-100 hover:text-scanova-primary transition-colors font-medium"
+								>
+									About
+								</Link>
+							)}
 
 							<div className="border-t my-3"></div>
 

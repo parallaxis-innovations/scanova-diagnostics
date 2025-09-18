@@ -20,7 +20,7 @@ import {
 	MapPinHouse,
 	UserPen,
 	UserCheck,
-	HeartPulse
+	HeartPulse,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -39,6 +39,19 @@ export default function SignupPage() {
 	});
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
+
+	const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value.replace(/\D/g, ""); // only digits allowed
+		if (value.length > 10) return; // stop extra digits
+
+		setFormData({ ...formData, phone_number: value });
+
+		if (value.length !== 10) {
+			setError("Phone number must be exactly 10 digits");
+		} else {
+			setError("");
+		}
+	};
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { id, value, type, checked } = e.target;
@@ -166,18 +179,21 @@ export default function SignupPage() {
 								</div>
 
 								<div>
-									<Label htmlFor="phone">Phone Number</Label>
+									<Label htmlFor="phone_number">Phone Number</Label>
 									<div className="relative mt-1">
 										<Input
 											id="phone_number"
 											type="tel"
 											value={formData.phone_number}
-											onChange={handleChange}
+											onChange={handlePhoneChange}
 											placeholder="Enter your phone number"
 											className="pl-10 h-12"
 										/>
 										<Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 									</div>
+									{error && (
+										<p className="text-red-500 text-sm mt-1">{error}</p>
+									)}
 								</div>
 
 								<div>

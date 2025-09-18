@@ -47,12 +47,12 @@ class EmailService {
             timestamp: Date.now(),
         };
 
-        // Token expires in 1 hour
-        return jwt.sign(payload, this.jwtSecret, { expiresIn: '1h' });
+        // Token expires in 2 minutes
+        return jwt.sign(payload, this.jwtSecret, { expiresIn: '2m' });
     }
 
     // Verify and decode reset token
-    verifyResetToken(token: string): { userId: string; email: string } | null {
+    verifyResetToken(token: string): { userId: string; email: string; issuedAtMs: number } | null {
         try {
             const decoded = jwt.verify(token, this.jwtSecret) as any;
 
@@ -63,6 +63,7 @@ class EmailService {
             return {
                 userId: decoded.userId,
                 email: decoded.email,
+                issuedAtMs: decoded.timestamp || (decoded.iat ? decoded.iat * 1000 : 0),
             };
         } catch (error) {
             console.error('Token verification failed:', error);
@@ -138,7 +139,7 @@ class EmailService {
     <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 20px 0;">
         <h3 style="color: #856404; margin-top: 0; font-size: 16px;">⚠️ Security Notice</h3>
         <ul style="color: #856404; margin: 0; padding-left: 20px;">
-            <li>This link will expire in 1 hour for your security</li>
+            <li>This link will expire in 2 minutes for your security</li>
             <li>If you didn't request this reset, please ignore this email</li>
             <li>Never share this link with anyone</li>
         </ul>
@@ -148,7 +149,7 @@ class EmailService {
         <p style="color: #666; font-size: 14px; margin: 0;">
             Need help? Contact our support team<br>
             <strong>Scanova Diagnostics</strong><br>
-            Email: support@scanovadiagnostics.com
+            Email: info@scanovadiagnostics.com
         </p>
     </div>
 </body>
@@ -167,15 +168,83 @@ We received a request to reset the password for your Scanova Diagnostics account
 To reset your password, please visit the following link:
 ${resetUrl}
 
-This link will expire in 1 hour for your security.
+This link will expire in 2 minutes for your security.
 
 If you didn't request this password reset, please ignore this email.
 
 Best regards,
 Scanova Diagnostics Team
 
-Need help? Contact us at support@scanovadiagnostics.com
+Need help? Contact us at info@scanovadiagnostics.com
     `;
+    }
+
+    // Send welcome email
+    async sendWelcomeEmail(toEmail: string, recipientName?: string): Promise<void> {
+        const name = (recipientName || '').trim() || 'there';
+        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        const loginUrl = `${baseUrl}/login`;
+
+        const mailOptions = {
+            from: `"Scanova Diagnostics" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+            to: toEmail,
+            subject: 'Welcome to Scanova Diagnostics',
+            html: this.generateWelcomeEmailHTML(name, loginUrl),
+            text: this.generateWelcomeEmailText(name, loginUrl),
+        };
+
+        try {
+            await this.transporter.sendMail(mailOptions);
+            console.log('✅ Welcome email sent to:', toEmail);
+        } catch (error) {
+            console.error('❌ Failed to send welcome email:', error);
+            // Do not throw to avoid blocking signup flow; log only
+        }
+    }
+
+    private generateWelcomeEmailHTML(name: string, loginUrl: string): string {
+        return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to Scanova Diagnostics</title>
+  <style>
+    .btn { background: linear-gradient(135deg, #0E7AA4, #1a8cb8); color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: 600; }
+  </style>
+  </head>
+  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="text-align:center; margin-bottom: 24px; border-bottom: 3px solid #0E7AA4; padding-bottom: 16px;">
+      <h1 style="color:#0E7AA4; margin:0;">Scanova Diagnostics</h1>
+      <p style="color:#666; margin:6px 0 0;">Your Health, Our Priority</p>
+    </div>
+    <div style="background:#f8f9fa; padding:24px; border-radius:10px;">
+      <h2 style="color:#0E7AA4; margin-top:0;">Welcome, ${name}!</h2>
+      <p>Thanks for creating your Scanova Diagnostics account. We're excited to support your health journey with convenient home collections, trusted reports, and seamless booking.</p>
+      <p style="text-align:center; margin:28px 0;">
+        <a href="${loginUrl}" class="btn">Log in to your account</a>
+      </p>
+      <p style="color:#555; font-size:14px;">Need help getting started? Reply to this email or reach us at info@scanovadiagnostics.com</p>
+    </div>
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #dee2e6; text-align:center; color:#666; font-size:13px;">
+      <p style="margin:0;">Scanova Diagnostics</p>
+    </div>
+  </body>
+</html>`;
+    }
+
+    private generateWelcomeEmailText(name: string, loginUrl: string): string {
+        return `
+Welcome to Scanova Diagnostics, ${name}!
+
+Thanks for creating your account. Log in to get started:
+${loginUrl}
+
+If you need help, email info@scanovadiagnostics.com
+
+— Scanova Diagnostics Team
+`;
     }
 
     // Test email configuration

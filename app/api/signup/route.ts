@@ -1,4 +1,5 @@
 import { directusApi } from '@/lib/directus';
+import { emailService } from '@/lib/email';
 import { directusService } from '@/lib/directus';
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -72,6 +73,14 @@ export async function POST(request: NextRequest) {
     
     if (!personalInfoRes) {
       console.error('Failed to create personal information:', personalInfoRes);
+    }
+    
+    // Fire-and-forget welcome email (non-blocking)
+    try {
+      const recipientName = validatedData.full_name;
+      emailService.sendWelcomeEmail(validatedData.email_id, recipientName);
+    } catch (e) {
+      console.warn('Welcome email dispatch failed:', e);
     }
     
     // Return success response (exclude sensitive data)

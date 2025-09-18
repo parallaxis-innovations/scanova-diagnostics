@@ -167,6 +167,22 @@ class DirectusService {
     }
   }
 
+  // Get minimal user metadata via admin (for token invalidation checks)
+  async getUserMetaById(userId: string): Promise<{ id: string; email?: string; date_updated?: string } | null> {
+    try {
+      const response = await this.directusFetch(`/users/${userId}?fields=id,email,date_updated`, {
+        headers: {
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+      });
+
+      return response ?? null;
+    } catch (error) {
+      console.error("❌ Get user meta by id failed:", error);
+      return null;
+    }
+  }
+
   // ✅ Update user password directly (for password reset)
   async updateUserPassword(userId: string, newPassword: string) {
     try {

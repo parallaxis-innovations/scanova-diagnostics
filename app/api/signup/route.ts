@@ -1,7 +1,7 @@
 import { directusApi } from '@/lib/directus';
 import { emailService } from '@/lib/email';
 import { directusService } from '@/lib/directus';
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from "next/server";
 import { z } from 'zod'
 
 const DIRECTUS_API_URL = process.env.DIRECTUS_API_URL;

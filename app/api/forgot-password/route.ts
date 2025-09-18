@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { directusApi } from "@/lib/directus";
+import { sendForgotPasswordEmail } from "@/lib/password";
 
 export async function POST(req: Request) {
   try {
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await directusApi.forgotPassword(email);
+    await sendForgotPasswordEmail(email);
     
     return NextResponse.json({
       success: true,

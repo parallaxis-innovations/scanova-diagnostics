@@ -65,6 +65,7 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public files (public folder)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public|api/*).*)',
+    // Exclude Next internals, favicon, and all static files in /public by extension
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico)|public|api/*).*)',
   ],
 };

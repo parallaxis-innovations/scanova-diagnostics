@@ -206,42 +206,7 @@ class DirectusService {
     }
   }
 
-  // ✅ Custom forgot password with email service
-  async forgotPassword(email: string) {
-    try {
-      // First, check if user exists
-      const user = await this.getUserByEmail(email);
-      
-      if (!user) {
-        // Don't reveal if user exists or not for security
-        return {
-          success: true,
-          message: "If an account with that email exists, we've sent you a password reset link."
-        };
-      }
-
-      // Import email service dynamically to avoid issues
-      const { emailService } = await import('./email');
-      
-      // Generate reset token
-      const resetToken = emailService.generateResetToken(user.id, user.email);
-      
-      // Send email
-      await emailService.sendPasswordResetEmail(user.email, resetToken);
-      
-      return {
-        success: true,
-        message: "Password reset email sent successfully"
-      };
-    } catch (error) {
-      console.error("❌ Forgot password failed:", error);
-      // Don't reveal actual error to user for security
-      return {
-        success: true,
-        message: "If an account with that email exists, we've sent you a password reset link."
-      };
-    }
-  }
+  // Note: password reset email logic moved to server-only module `lib/password.ts`
 
 
 

@@ -1,11 +1,9 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { getServerSession, NextAuthOptions } from "next-auth";
-// import { authOptions } from "@/app/api/auth/[[...nextauth]]/route";
 import { redirect } from "next/navigation";
 import { directusService } from "./directus";
 
 export async function getSession() {
-  return await getServerSession(authOptions);
+  return await getServerSession();
 }
 
 export async function getCurrentUser() {

@@ -21,7 +21,7 @@ export default withAuth(
     }
 
     // Check if authenticated user is trying to access auth pages
-    if (pathname === '/login' || pathname === '/signup') {
+    if (pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password') {
       if (token) {
         return NextResponse.redirect(new URL('/dashboard', req.url));
       }
@@ -45,6 +45,7 @@ export default withAuth(
             pathname.startsWith('/home-collection') ||
             pathname.startsWith('/services') ||
             pathname.startsWith('/packages') ||
+            pathname.startsWith('/contact') ||
             pathname.startsWith('/faq')) {
           return true;
         }

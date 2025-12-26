@@ -70,7 +70,41 @@ export async function POST(request: NextRequest) {
       `,
     };
 
-    await transporter.sendMail(adminMailOptions);
+    // Mail to user (confirmation)
+    const userMailOptions = {
+      from: process.env.SMTP_USER || "noreply@scanovadiagnostics.com",
+      to: formData.email,
+      subject: "Thank you for contacting Scanova Diagnostics!",
+      html: `
+        <div style="font-family: Arial, sans-serif; background-color: #f7f9fb; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+      <!-- Header -->
+      <div style="background: #007b8f; color: #ffffff; text-align: center; padding: 20px;">
+        <h1 style="margin:0; font-size: 22px; letter-spacing: 1px;">SCANOVA DIAGNOSTICS</h1>
+        <p style="margin:0; font-size: 14px;">Contact Form Confirmation</p>
+      </div>
+      <!-- Body -->
+      <div style="padding: 20px;">
+        <p style="font-size: 16px; color: #333;">Dear ${formData.name},</p>
+        <p style="font-size: 15px; color: #555;">Thank you for reaching out to us. We have received your message and our team will contact you soon.</p>
+        <p style="font-size: 15px; color: #555;">If you have any urgent queries, feel free to reply to this email or contact us at <a href="mailto:admin@scanovadiagnostics.com" style="color: #007b8f;">admin@scanovadiagnostics.com</a>.</p>
+        <br />
+        <p style="font-size: 15px; color: #555;">Best regards,<br/>Scanova Diagnostics Team</p>
+      </div>
+      <!-- Footer Note -->
+      <div style="background: #fef3c7; padding: 12px 20px; border-top: 1px solid #f1e3a8; color: #92400e; font-size: 14px;">
+        This is an automated confirmation. No further action is required.
+      </div>
+    </div>
+  </div>
+      `,
+    };
+
+    // Send both emails in parallel
+    await Promise.all([
+      transporter.sendMail(adminMailOptions),
+      transporter.sendMail(userMailOptions),
+    ]);
 
     return NextResponse.json(
       { message: "Your message has been sent successfully!" },

@@ -25,20 +25,26 @@ import {
 import Image from "next/image";
 
 export default function SignupPage() {
-	const router = useRouter();
 	const [formData, setFormData] = useState({
-		name: "",
-		email: "",
-		phone: "",
-		password: "",
-		agree: false,
-	});
+  full_name: "",
+  email_id: "",
+  phone_number: "",
+  password: "",
+  address: "",
+  age: "",
+  gender: "",
+  blood_group: "",
+  agree: false,
+});
+
+
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
 
 	const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value.replace(/\D/g, ""); // only digits allowed
-		if (value.length > 10) return; // stop extra digits
+		const value = e.target.value.replace(/\D/g, "");
+
+		if (value.length > 10) return;
 
 		setFormData({ ...formData, phone_number: value });
 
@@ -56,6 +62,8 @@ export default function SignupPage() {
 			[id]: type === "checkbox" ? checked : value,
 		});
 	};
+
+	console.log("DEBUG SEND", formData);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -146,9 +154,9 @@ export default function SignupPage() {
 									<Label htmlFor="name">Full Name</Label>
 									<div className="relative mt-1">
 										<Input
-											id="name"
+											id="full_name"
 											type="text"
-											value={formData.name}
+											value={formData.full_name}
 											onChange={handleChange}
 											placeholder="Enter your full name"
 											className="pl-10 h-12"
@@ -162,9 +170,9 @@ export default function SignupPage() {
 									<Label htmlFor="email">Email Address</Label>
 									<div className="relative mt-1">
 										<Input
-											id="email"
+											id="email_id"
 											type="email"
-											value={formData.email}
+											value={formData.email_id}
 											onChange={handleChange}
 											placeholder="Enter your email"
 											className="pl-10 h-12"
@@ -178,7 +186,7 @@ export default function SignupPage() {
 									<Label htmlFor="phone_number">Phone Number</Label>
 									<div className="relative mt-1">
 										<Input
-											id="phone"
+											id="phone_number"
 											type="tel"
 											value={formData.phone_number}
 											onChange={handlePhoneChange}
